@@ -1,0 +1,22 @@
+version: '3.7'
+services:
+  glances:
+    container_name: glances
+    image:  nicolargo/glances:latest-full
+    restart: always
+    ports:
+      - "61208:61208"
+    runtime: nvidia
+    environment:
+      GLANCES_OPT: "-C /glances/conf/glances.conf -w"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./test.conf:/glances/conf/glances.conf"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 2
+              capabilities: [gpu]
+    pid: "host"
