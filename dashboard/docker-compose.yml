@@ -1,0 +1,49 @@
+version: '3.9'
+
+
+services:
+
+  node_exporter:
+    image: quay.io/prometheus/node-exporter:latest
+    ports:
+       - "9100:9100"
+    container_name: node_exporter
+    command:
+      - '--path.rootfs=/host'
+    pid: host
+    restart: unless-stopped
+    volumes:
+      - '/:/host:ro,rslave'
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.45.0 # latest tag is not updated...
+                                            # https://github.com/google/cadvisor/issues/3066
+                                            # To manual check versions: https://github.com/google/cadvisor/releases
+    container_name: cadvisor
+    ports:
+       - "8080:8080"
+    #network_mode: host
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    devices:
+      - /dev/kmsg
+    restart: unless-stopped
+
+  nvidia_exporter: #to export data from DCGM host, need DCGM installed of an equal or newer version to the container on the host system https://github.com/NVIDIA/DCGM
+    image: nvcr.io/nvidia/k8s/dcgm-exporter:2.3.2-2.6.2-ubuntu20.04
+    container_name: nvidia_smi_exporter
+    runtime: nvidia
+    cap_add:
+      - SYS_ADMIN
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all
+    ports:
+      - "9400:9400"
+    restart: unless-stopped
+
+
